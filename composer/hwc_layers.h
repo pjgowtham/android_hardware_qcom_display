@@ -125,6 +125,10 @@ class HWCLayer {
     ignore_sdr_content_md_ = disable;
   }
 
+#ifdef UDFPS_ZPOS
+  bool IsFodPressed() { return fod_pressed_; }
+#endif
+
  private:
   Layer *layer_ = nullptr;
   LayerTypes type_ = kLayerUnknown;
@@ -148,6 +152,9 @@ class HWCLayer {
   bool secure_ = false;
   bool compatible_ = false;
   bool ignore_sdr_content_md_ = false;
+#ifdef UDFPS_ZPOS
+  bool fod_pressed_ = false;
+#endif
 
   // Composition requested by client(SF) Original
   HWC2::Composition client_requested_orig_ = HWC2::Composition::Device;
