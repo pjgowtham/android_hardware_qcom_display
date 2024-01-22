@@ -1469,10 +1469,15 @@ void HWDeviceDRM::SetupAtomic(Fence::ScopedRef &scoped_ref, HWLayersInfo *hw_lay
 
 #ifdef UDFPS_ZPOS
           uint32_t z_order = pipe_info->z_order;
+          sde_drm::DRMHbmState hbm_state = sde_drm::DRMHbmState::OFF;
           if (layer.flags.fod_pressed) {
             z_order |= FOD_PRESSED_LAYER_ZORDER;
+            hbm_state = sde_drm::DRMHbmState::FOD_TYPE;
+            drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_HBM_STATE, token_.conn_id, hbm_state);
           }
           drm_atomic_intf_->Perform(DRMOps::PLANE_SET_ZORDER, pipe_id, z_order);
+          // This part is supposed to be run on touch up
+          drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_HBM_STATE, token_.conn_id, hbm_state);
 #else
           drm_atomic_intf_->Perform(DRMOps::PLANE_SET_ZORDER, pipe_id, pipe_info->z_order);
 #endif

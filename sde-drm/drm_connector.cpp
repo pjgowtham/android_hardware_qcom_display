@@ -1176,6 +1176,17 @@ void DRMConnector::Perform(DRMOps code, drmModeAtomicReq *req, va_list args) {
       DRM_LOGD("Connector %d: Setting Qsync mode %d", obj_id, qsync_mode);
     } break;
 
+    case DRMOps::CONNECTOR_SET_HBM_STATE: {
+      if (!prop_mgr_.IsPropertyAvailable(DRMProperty::HBM_STATE)) {
+        return;
+      }
+      int drm_hbm_state = va_arg(args, int);
+      uint32_t hbm_state = static_cast<uint32_t>(drm_hbm_state);
+      uint32_t prop_id = prop_mgr_.GetPropertyId(DRMProperty::HBM_STATE);
+      drmModeAtomicAddProperty(req, obj_id, prop_id, hbm_state);
+      DRM_LOGD("Connector %d: Connector Setting HBM_STATE %d: hbm_state %x, prop_id=%d", obj_id, hbm_state, prop_id);
+    } break;
+
     case DRMOps::CONNECTOR_SET_TOPOLOGY_CONTROL: {
       uint32_t topology_control = va_arg(args, uint32_t);
       drmModeAtomicAddProperty(req, obj_id, prop_mgr_.GetPropertyId(DRMProperty::TOPOLOGY_CONTROL),

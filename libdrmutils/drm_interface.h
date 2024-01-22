@@ -466,6 +466,12 @@ enum struct DRMOps {
    */
   CONNECTOR_SET_QSYNC_MODE,
   /*
+   * Op: Sets hbm_en on connector
+   * Arg: uint32_t - Connector ID
+   *     uint32_t - hbm enable
+   */
+  CONNECTOR_SET_HBM_STATE,
+  /*
    * Op: Sets topology control on this connector
    * Arg: uint32_t - Connector ID
    *      uint32_t - Topology control bit-mask
@@ -1023,6 +1029,19 @@ enum struct DRMQsyncMode {
   NONE = 0,
   CONTINUOUS,
   ONESHOT,
+};
+
+enum struct DRMHbmState {
+  OFF = 0,
+  AOD_BEFORE_SCREEN_OFF = 8,
+  AOD_ICON = c,
+  AOD_TOUCH_DOWN = 6,
+  PRE_ENROLL_STEP1 = 1,
+  PRE_ENROLL = 5,
+  TOUCH_UP = 5,
+  TOUCH_DOWN = 7,
+  POST_UNLOCK_TOUCH_UP = 1,
+  POST_UNLOCK_TOUCH_DOWN = 4,
 };
 
 enum struct DRMCacheState {
