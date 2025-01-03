@@ -166,6 +166,9 @@ HWCSession *HWCSession::GetInstance() {
 
 int HWCSession::Init() {
   SCOPE_LOCK(locker_[HWC_DISPLAY_PRIMARY]);
+
+  auto iris_feature = pxlw::IrisFeature::getInstance();
+
   DLOGI("Initializing HWCSession");
 
   int status = -EINVAL;
@@ -245,6 +248,8 @@ int HWCSession::Init() {
   } else {
     DLOGI("Creating the Primary display...done!");
   }
+
+  auto iris_wrapper = pxlw::PxlwIrisWrapper::GetInstance();
 
   is_composer_up_ = true;
   StartServices();

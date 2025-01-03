@@ -180,7 +180,8 @@ DRMProperty DRMPropertyManager::GetPropertyEnum(const std::string &name) const {
   if (name == "dimming_bl_lut") { return DRMProperty::DIMMING_BL_LUT; }
   if (name == "dimming_dyn_ctrl") { return DRMProperty::DIMMING_DYN_CTRL; }
   if (name == "dimming_min_bl") { return DRMProperty::DIMMING_MIN_BL; }
-
+  if (name == "iris_set_metadata") { return DRMProperty::IRIS_METADATA; }
+  if (name == "panel_level") { return DRMProperty::PANEL_LEVEL; }
   return DRMProperty::INVALID;
 }
 

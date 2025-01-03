@@ -501,6 +501,22 @@ enum struct DRMOps {
    */
   CONNECTOR_SET_DSC_MODE,
   /*
+   * Op: Sets pixelworks iris metadata
+   * Arg: uint32_t - Connector ID
+   *      uint64_t - iris metadata
+   */
+  CONNECTOR_SET_IRIS_METADATA,
+  /*
+   * Op: Sets panel level
+   * Arg: uint32_t - Connector ID
+   *      uint64_t - Any of the below bit list
+   * val bits list
+   * 0  - 13 bits for backlight
+   * 14 - 27 bits for delay
+   * 28 - 30 bits for wait vsync flag
+   */
+  CONNECTOR_SET_PANEL_LEVEL,
+  /*
    * Op: Reset panel features.
    * Arg: drmModeAtomicReq - Atomic request
    */

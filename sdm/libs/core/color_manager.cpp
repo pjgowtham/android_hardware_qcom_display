@@ -244,6 +244,12 @@ ColorManagerProxy *ColorManagerProxy::CreateColorManagerProxy(DisplayType type,
         color_manager_proxy->curr_mode_.gamma = Transfer_sRGB;
         color_manager_proxy->curr_mode_.intent = snapdragoncolor::kNative;
       }
+
+      auto iris_feature = pxlw::IrisFeature::getInstance();
+      if (type == kPrimary && iris_feature->hasSoftIris()) {
+      PPHWAttributes &hw_attr = color_manager_proxy->pp_hw_attributes_;
+      color_manager_proxy->SetupSoftIrisLibrary(hw_attr.panel_name);
+      }
     }
   }
 
@@ -1202,6 +1208,38 @@ DisplayError FeatureStateSerializedTrigger::GetParams(FeatureOps param_type,
   }
 
   return error;
+}
+
+DisplayError ColorManagerProxy::SetupSoftIrisLibrary(const std::string& panel_name) {
+  if (iris_lib_handle_) {
+    dlclose(iris_lib_handle_);
+    iris_lib_handle_ = nullptr;
+  }
+
+  iris_lib_handle_ = dlopen("libpwirissoft.so", RTLD_NOW);
+  if (!iris_lib_handle_) {
+    DLOGE("IRIS_LOG_HWC Soft Iris library is not present");
+    return kErrorResources;
+  }
+
+  if (!(iris_create_ = (decltype(iris_create_))dlsym(iris_lib_handle_, "pxlwIrisCreate")) ||
+      !(iris_destroy_ = (decltype(iris_destroy_))dlsym(iris_lib_handle_, "pxlwIrisDestroy")) ||
+      !(iris_commit_ = (decltype(iris_commit_))dlsym(iris_lib_handle_, "pxlwIrisCommit"))) {
+    DLOGE("IRIS_LOG_HWC Get Soft Iris functions failed: %s", dlerror());
+    if (iris_lib_handle_) {
+      dlclose(iris_lib_handle_);
+      iris_lib_handle_ = nullptr;
+    }
+    iris_create_ = nullptr;
+    iris_destroy_ = nullptr;
+    iris_commit_ = nullptr;
+    return kErrorResources;
+  }
+
+  iris_create_(panel_name);
+  iris_initialized_ = true;
+
+  return kErrorNone;
 }
 
 }  // namespace sdm

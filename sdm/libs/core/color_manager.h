@@ -44,6 +44,7 @@
 #include <mutex>
 
 #include "hw_interface.h"
+#include <pxlw_iris_feature.h>
 
 namespace sdm {
 
@@ -158,6 +159,8 @@ class ColorManagerProxy {
   DisplayError ColorMgrSetLtmPccConfig(void* pcc_input, size_t size);
   DisplayError ColorMgrSetSprIntf(std::shared_ptr<SPRIntf> spr_intf);
 
+  DisplayError SetupSoftIrisLibrary(const std::string& panel_name);
+
  protected:
   ColorManagerProxy() {}
   ColorManagerProxy(int32_t id, DisplayType type, HWInterface *intf,
@@ -198,6 +201,18 @@ class ColorManagerProxy {
   snapdragoncolor::ScPostBlendInterface *stc_intf_ = NULL;
   snapdragoncolor::ColorMode curr_mode_;
   bool needs_update_ = false;
+
+  // Function pointer types for Iris library
+  typedef void* (*PxlwIrisCreate)(const std::string&);
+  typedef void (*PxlwIrisDestroy)(void*);
+  typedef int (*PxlwIrisCommit)(void*);
+
+  // Library handle and function pointers
+  void* iris_lib_handle_ = nullptr;
+  PxlwIrisCreate iris_create_ = nullptr;
+  PxlwIrisDestroy iris_destroy_ = nullptr; 
+  PxlwIrisCommit iris_commit_ = nullptr;
+  bool iris_initialized_ = false;
 };
 
 class ColorFeatureCheckingImpl : public FeatureInterface {
