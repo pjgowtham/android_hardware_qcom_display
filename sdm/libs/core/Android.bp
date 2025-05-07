@@ -14,7 +14,12 @@ cc_library_shared {
         "-Wno-format",
         "-Wno-unused-parameter",
         "-DLOG_TAG=\"SDM\"",
-    ],
+    ] + select(soong_config_variable("qtidisplay", "pxlw_vendor_namespace"), {
+        any @ value: [
+            "-DSUPPORTS_PXLW",
+        ],
+        default: [],
+    }),
     shared_libs: [
         "libdl",
         "libdisplaydebug",
@@ -22,7 +27,12 @@ cc_library_shared {
         "libdrm",
         "libdrmutils",
         "libsdedrm",
-    ],
+    ] + select(soong_config_variable("qtidisplay", "pxlw_vendor_namespace"), {
+        any @ value: [
+            "//" + value + ":libpwirisfeature",
+        ],
+        default: [],
+    }),
 
     srcs: [
         "core_interface.cpp",
