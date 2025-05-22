@@ -362,7 +362,7 @@ class HWDeviceDRM : public HWInterface {
   std::unique_ptr<HWColorManagerDrm> hw_color_mgr_ = {};
   bool seamless_mode_switch_ = false;
 #ifdef SEC_FINGERPRINT_MASK
-  bool current_mask_state_ = false;
+  uint32_t current_mask_state_ = 0;
 #endif
 };
 

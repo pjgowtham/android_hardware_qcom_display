@@ -1227,10 +1227,11 @@ DisplayError HWDeviceDRM::PowerOff(bool teardown, SyncPoints *sync_points) {
     pending_power_state_ = kPowerStateOff;
     return kErrorDeferred;
   }
+
 #ifdef SEC_FINGERPRINT_MASK
   if (IsPrimaryDisplay()) {
     if (current_mask_state_) {
-      current_mask_state_ = false;
+      current_mask_state_ = 0;
       drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_FINGERPRINT_MASK,
           token_.conn_id, current_mask_state_);
       DLOGI("Display:%d Setting Fingerprint inDisplay Layer property = %d",
@@ -1404,26 +1405,20 @@ void HWDeviceDRM::SetupAtomic(Fence::ScopedRef &scoped_ref, HWLayersInfo *hw_lay
   bool update_luts = hw_layers_info->updates_mask.test(kUpdateLuts);
 
 #ifdef SEC_FINGERPRINT_MASK
-  if (IsPrimaryDisplay()) {
-    bool mask_state_ = false;
-
-    for (uint32_t i = 0; i < hw_layer_count; i++) {
-      Layer &layer = hw_layer_info.hw_layers.at(i);
-      if (layer.flags.fod_pressed ||
-          (hw_layer_info.stack->flags.fod_pressed_present && i == hw_layer_count - 1)) {
-        mask_state_ = true;
-        goto out;
-      }
+  uint32_t mask_state = 0;
+  for (size_t i = 0; i < hw_layers_info->hw_layers.size(); ++i) {
+    const std::string &name = hw_layers_info->hw_layers[i].layer_name;
+    if (name.find("Dim Layer for UDFPS") != std::string::npos) {
+      mask_state |= 0x1; // bit 0 for dim
     }
-
-  out:
-    if (current_mask_state_ != mask_state_) {
-      current_mask_state_ = mask_state_;
-      drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_FINGERPRINT_MASK,
-          token_.conn_id, current_mask_state_);
-      DLOGI("Display:%d Setting Fingerprint inDisplay Layer property = %d",
-            display_id_, current_mask_state_);
+    if (name.find("UdfpsControllerOverlay") != std::string::npos) {
+      mask_state |= 0x2; // bit 1 for pressed
     }
+    DLOGI("Layer name: %s, mask_state: %d", name.c_str(), mask_state);
+  }
+  if (current_mask_state_ != mask_state) {
+    current_mask_state_ = mask_state;
+    drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_FINGERPRINT_MASK, token_.conn_id, mask_state);
   }
 #endif
 
@@ -1967,7 +1962,6 @@ DisplayError HWDeviceDRM::AtomicCommit(HWLayersInfo *hw_layers_info) {
   drm_atomic_intf_->Perform(sde_drm::DRMOps::CRTC_SET_VM_REQ_STATE, token_.crtc_id,
                             sde_drm::DRMVMRequestState::NONE);
 #endif
-
   return kErrorNone;
 }
 
