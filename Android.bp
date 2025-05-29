@@ -7,6 +7,7 @@ soong_config_module_type {
         "headless",
         "llvmsa",
         "gralloc4",
+        "oplus_adfr",
         "oplus_udfps",
         "samsung_udfps",
         "default",
@@ -105,6 +106,9 @@ qtidisplay_cc_defaults {
             conditions_default: {
                 enabled: true,
             },
+        },
+        oplus_adfr: {
+            cflags: ["-DOPLUS_ADFR"],
         },
         oplus_udfps: {
             cflags: ["-DCONNECTOR_PROP_UDFPS", "-DOPLUS_FINGERPRINT_MASK"],

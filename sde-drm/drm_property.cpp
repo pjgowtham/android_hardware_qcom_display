@@ -183,6 +183,9 @@ DRMProperty DRMPropertyManager::GetPropertyEnum(const std::string &name) const {
 #ifdef CONNECTOR_PROP_UDFPS
   if (name == "fingerprint_mask" || name == "hbm_enable") { return DRMProperty::FINGERPRINT_MASK; }
 #endif
+#ifdef OPLUS_ADFR
+  if (name == "qsync_min_fps") { return DRMProperty::QSYNC_MIN_FPS; }
+#endif
 
   return DRMProperty::INVALID;
 }

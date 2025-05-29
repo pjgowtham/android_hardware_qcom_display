@@ -569,6 +569,10 @@ DisplayError HWDeviceDRM::Init() {
 
   InitializeConfigs();
   PopulateHWPanelInfo();
+#ifdef OPLUS_ADFR
+  // Initialize ADFR with Auto mode and 10Hz min fps after we have panel info
+  InitializeAdfrConfigs();
+#endif
   UpdateMixerAttributes();
 
   // TODO(user): In future, remove has_qseed3 member, add version and pass version to constructor
@@ -3258,5 +3262,29 @@ DisplayError HWDeviceDRM::CancelDeferredPowerMode() {
 
   return kErrorNone;
 }
+
+#ifdef OPLUS_ADFR
+void HWDeviceDRM::InitializeAdfrConfigs() {
+  uint32_t auto_mode = oplus::ADFR_PROP_MAGIC | oplus::ADFR_PROP_MODE_MAGIC |
+                      (static_cast<uint32_t>(oplus::AutoMode::kOn) << 16) |
+                      oplus::ADFR_PROP_MIN_FPS_MAGIC |
+                      static_cast<uint32_t>(oplus::MinFps::k10Hz);
+  // Set initial ADFR configuration to Auto mode with 10Hz min fps
+  drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_QSYNC_MODE, token_.conn_id, auto_mode);
+}
+
+DisplayError HWDeviceDRM::SetOplusAdaptiveMode(oplus::AutoMode mode, oplus::MinFps min_fps) {
+  uint32_t auto_mode = oplus::ADFR_PROP_MAGIC | oplus::ADFR_PROP_MODE_MAGIC;
+  if (mode == oplus::AutoMode::kOn) {
+    auto_mode |= (static_cast<uint32_t>(oplus::AutoMode::kOn) << 16);
+    auto_mode |= oplus::ADFR_PROP_MIN_FPS_MAGIC;
+    auto_mode |= static_cast<uint32_t>(min_fps);
+  } else {
+    auto_mode |= (static_cast<uint32_t>(oplus::AutoMode::kOff) << 16);
+  }
+  drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_QSYNC_MODE, token_.conn_id, auto_mode);
+  return kErrorNone;
+}
+#endif
 
 }  // namespace sdm

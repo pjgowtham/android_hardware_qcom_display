@@ -89,6 +89,38 @@ using sde_drm::DRMPowerMode;
 namespace sdm {
 class HWInfoInterface;
 
+namespace oplus {
+constexpr uint64_t ADFR_PROP_MAGIC = 0x00800000;
+constexpr uint64_t ADFR_PROP_MODE_MAGIC = 0x00400000;
+constexpr uint64_t ADFR_PROP_MIN_FPS_MAGIC = 0x00000080;
+
+enum class AutoMode {
+  kOff = 0,
+  kOn = 1,
+};
+
+enum class MinFps {
+  kMax = 0x00,      // Let DDIC decide (e.g., 120->1)
+  k60Hz = 0x01,
+  k40Hz = 0x02,
+  k30Hz = 0x03,
+  k24Hz = 0x04,
+  k20Hz = 0x05,
+  k10Hz = 0x0B,
+  k1Hz = 0x77,
+};
+
+// Enum for h_skew types from oplus_adfr.h to make the code readable
+enum class AdfrModeType {
+  kSdcAdfr = 0,   // SA
+  kSdcMfr = 1,    // SM
+  kOplusAdfr = 2, // OA
+  kOplusMfr = 3,  // OM
+  kUnknown = -1
+};
+
+}  // namespace oplus
+
 struct SDECsc {
   struct sde_drm_csc_v1 csc_v1 = {};
   // More here, maybe in a union
@@ -266,6 +298,11 @@ class HWDeviceDRM : public HWInterface {
   DisplayError GetPanelBlMaxLvl(uint32_t *bl_max);
   DisplayError SetPPConfig(void *payload, size_t size);
   DisplayError GetQsyncFps(uint32_t *qsync_fps) { return kErrorNotSupported; }
+#ifdef OPLUS_ADFR
+  void InitializeAdfrConfigs();
+  DisplayError SetOplusAdaptiveMode(oplus::AutoMode mode, oplus::MinFps min_fps);
+#endif
+
   void SetTopologyMuxUsage(HWTopology hw_topology, bool *is_3d_mux_used);
 
   class Registry {
