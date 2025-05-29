@@ -133,6 +133,9 @@ int DRMAtomicReq::Perform(DRMOps opcode, uint32_t obj_id, ...) {
 #ifdef CONNECTOR_PROP_UDFPS
     case DRMOps::CONNECTOR_SET_FINGERPRINT_MASK:
 #endif
+#ifdef OPLUS_ADFR
+    case DRMOps::CONNECTOR_SET_QSYNC_MIN_FPS:
+#endif
     case DRMOps::CONNECTOR_SET_DSC_MODE: {
       drm_mgr_->GetConnectorMgr()->Perform(opcode, obj_id, drm_atomic_req_, args);
     } break;

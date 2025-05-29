@@ -188,6 +188,9 @@ enum struct DRMProperty {
 #ifdef CONNECTOR_PROP_UDFPS
   FINGERPRINT_MASK,
 #endif
+#ifdef OPLUS_ADFR
+  QSYNC_MIN_FPS,
+#endif
 
   // Insert above
   MAX

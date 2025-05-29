@@ -1294,6 +1294,24 @@ void DRMConnector::Perform(DRMOps code, drmModeAtomicReq *req, va_list args) {
       }
     } break;
 #endif
+#ifdef OPLUS_ADFR
+    case DRMOps::CONNECTOR_SET_QSYNC_MIN_FPS: {
+      if (!prop_mgr_.IsPropertyAvailable(DRMProperty::QSYNC_MIN_FPS)) {
+        DRM_LOGE("DRMConnector::%s: Connector %d: qsync_min_fps property is not available",
+                 __FUNCTION__, obj_id);
+        return;
+      }
+      uint32_t qsync_min_fps = va_arg(args, uint32_t);
+      uint32_t prop_id = prop_mgr_.GetPropertyId(DRMProperty::QSYNC_MIN_FPS);
+      int ret = drmModeAtomicAddProperty(req, obj_id, prop_id, qsync_min_fps);
+      if (ret < 0) {
+        DRM_LOGE("AtomicAddProperty failed obj_id 0x%x, prop_id %d mode %d ret %d",
+                 obj_id, prop_id, qsync_min_fps, ret);
+      } else {
+        DRM_LOGD("Connector %d: Setting Qsync Min FPS %d", obj_id, qsync_min_fps);
+      }
+    } break;
+#endif
 
     default:
       DRM_LOGE("Invalid opcode %d to set on connector %d", code, obj_id);

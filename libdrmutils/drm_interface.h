@@ -513,6 +513,14 @@ enum struct DRMOps {
    */
   CONNECTOR_SET_FINGERPRINT_MASK,
 #endif
+#ifdef OPLUS_ADFR
+  /*
+   * Op: Sets fingerprint mask on this connector
+   * Arg: uint32_t - Connector ID
+   *      uint32_t - minimum fps
+   */
+  CONNECTOR_SET_QSYNC_MIN_FPS,
+#endif
 };
 
 enum struct DRMRotation {
