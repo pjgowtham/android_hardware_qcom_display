@@ -73,6 +73,15 @@
 #include <string>
 #include <vector>
 
+#ifdef PXLW_IRIS
+#include <pxlw_iris_feature.h>
+#include <vendor/pixelworks/hardware/display/VendorConfig.h>
+#include <vendor/pixelworks/hardware/display/1.0/IIris.h>
+
+using vendor::pixelworks::hardware::display::IVendorConfig;
+using vendor::pixelworks::hardware::display::V1_0::IIris;
+#endif
+
 #include "display_builtin.h"
 #include "drm_interface.h"
 #include "drm_master.h"
@@ -122,6 +131,27 @@ DisplayError DisplayBuiltIn::Init() {
     HWInterface::Destroy(hw_intf_);
     return error;
   }
+
+#ifdef PXLW_IRIS
+  if (pxlw::IrisFeature::getInstance()->hasSoftIris()) {
+    auto iris_service = IIris::tryGetService();
+    if (iris_service) {
+      std::string panel_name = hw_panel_info_.panel_name;
+      if (auto newline = panel_name.find('\n'); newline != std::string::npos) {
+        panel_name.resize(newline);
+      }
+      std::replace(panel_name.begin(), panel_name.end(), ' ', '_');
+      // IrisService uses "primary" to select one of its two panel-name slots.
+      const std::string panel_info =
+          "{\"id\":" + std::to_string(display_id_) +
+          ",\"type\":" + std::to_string(static_cast<int>(display_type_)) +
+          ",\"primary\":" + std::to_string(hw_panel_info_.is_primary_panel ? 1 : 0) +
+          ",\"name\":\"" + panel_name + "\"}";
+      iris_service->irisConfigureBatch(IVendorConfig::SET_PANEL_INFO, panel_info,
+                                       [](int32_t, const android::hardware::hidl_string &) {});
+    }
+  }
+#endif
 
   if (color_mgr_) {
     color_mgr_->ColorMgrGetStcModes(&stc_color_modes_);

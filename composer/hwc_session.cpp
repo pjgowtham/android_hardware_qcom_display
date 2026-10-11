@@ -2691,8 +2691,17 @@ int HWCSession::CreatePrimaryDisplay() {
 
       auto hwc_display = &hwc_display_[HWC_DISPLAY_PRIMARY];
       hwc2_display_t client_id = map_info_primary_.client_id;
+#ifdef PXLW_IRIS
+      pxlw::PxlwIrisWrapper *iris_wrapper = nullptr;
+#endif
 
       if (info.display_type == kBuiltIn) {
+#ifdef PXLW_IRIS
+        // This indirectly invokes IrisService constructor as required in devices
+        // with soft-iris that don't ship with iris-service binary.
+        // Construct it before SDM reports the panel identity.
+        iris_wrapper = pxlw::PxlwIrisWrapper::GetInstance();
+#endif
         status = HWCDisplayBuiltIn::Create(core_intf_, &buffer_allocator_, &callbacks_, this,
                                           qservice_, client_id, info.display_id, hwc_display);
       } else if (info.display_type == kPluggable) {
@@ -2720,16 +2729,16 @@ int HWCSession::CreatePrimaryDisplay() {
         }
 
 #ifdef PXLW_IRIS
-        // This indirectly invokes IrisService constructor as required in devices
-        // with soft-iris that don't ship with iris-service binary.
-        auto *iris_wrapper = pxlw::PxlwIrisWrapper::GetInstance();
-        auto iris_feature = pxlw::IrisFeature::getInstance();
-        DisplayConfigVariableInfo config = {};
-        hwc_display[0]->GetDisplayAttributesForConfig(0, &config);
-
-        if (iris_wrapper && iris_feature->hasSoftIris()) {
-          reinterpret_cast<pxlw::PxlwSoftirisWrapper *>(iris_wrapper)
-              ->InitPrimaryDisplay(config.vsync_period_ns, config.x_pixels, config.y_pixels);
+        if (iris_wrapper && pxlw::IrisFeature::getInstance()->hasSoftIris()) {
+          DisplayConfigVariableInfo var_info = {};
+          uint32_t config = 0;
+          (*hwc_display)->GetActiveDisplayConfig(&config);
+          if (!(*hwc_display)->GetDisplayAttributesForConfig(INT(config), &var_info)) {
+            reinterpret_cast<pxlw::PxlwSoftirisWrapper *>(iris_wrapper)
+                ->InitPrimaryDisplay(var_info.vsync_period_ns, var_info.x_pixels, var_info.y_pixels);
+          } else {
+            DLOGW("Failed to get active config for soft-iris initialization");
+          }
         }
 #endif
       } else {

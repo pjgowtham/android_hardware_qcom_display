@@ -1472,6 +1472,20 @@ HWC2::Error HWCDisplayBuiltIn::CommitOrPrepare(bool validate_only,
       auto status = PostCommitLayerStack(out_retire_fence);
       return status;
     }
+
+#ifdef PXLW_IRIS
+    if (pxlw::IrisFeature::getInstance()->hasSoftIris()) {
+      auto *iris_wrapper = pxlw::PxlwIrisWrapper::GetInstance();
+      if (iris_wrapper) {
+        // Stock defaults for wrapper outputs; -1 means no update for the second output.
+        // This integration currently ignores the returned values.
+        int out_brightness = 0, out_unknown = -1, out_unused = 0;
+        reinterpret_cast<pxlw::PxlwSoftirisWrapper *>(iris_wrapper)
+            ->BeforeCommitLayerStack(static_cast<int>(id_), static_cast<int>(type_), out_brightness,
+                                     out_unknown, out_unused);
+      }
+    }
+#endif
   }
 
   auto status = HWCDisplay::CommitOrPrepare(validate_only, out_retire_fence, out_num_types,

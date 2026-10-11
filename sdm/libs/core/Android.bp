@@ -32,6 +32,9 @@ cc_library_shared {
     ]+ select(soong_config_variable("qtidisplay", "pxlw_vendor_namespace"), {
         any @ value: [
             "//" + value + ":libpwirisfeature",
+            "//hardware/pixelworks/interfaces:vendor.pixelworks.hardware.display-V1-cpp",
+            "//hardware/pixelworks/interfaces:vendor.pixelworks.hardware.display@1.0",
+            "libhidlbase",
         ],
         default: [],
     }),
