@@ -316,6 +316,7 @@ class HWDeviceDRM : public HWInterface {
   std::vector<HWDisplayAttributes> display_attributes_ = {};
   uint32_t current_mode_index_ = 0;
   sde_drm::DRMConnectorInfo connector_info_ = {};
+  bool oplus_adfr_idle_ = false;
   bool first_cycle_ = true;
   bool first_null_cycle_ = true;
   HWMixerAttributes mixer_attributes_ = {};

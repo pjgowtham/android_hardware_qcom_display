@@ -980,6 +980,7 @@ int DRMConnector::GetInfo(DRMConnectorInfo *info) {
   info->type = drm_connector_->connector_type;
   info->type_id = drm_connector_->connector_type_id;
   info->is_connected = IsConnected();
+  info->has_qsync_min_fps = prop_mgr_.IsPropertyAvailable(DRMProperty::QSYNC_MIN_FPS);
 
   drmModeObjectProperties *props =
       drmModeObjectGetProperties(fd_, drm_connector_->connector_id, DRM_MODE_OBJECT_CONNECTOR);
@@ -1174,6 +1175,16 @@ void DRMConnector::Perform(DRMOps code, drmModeAtomicReq *req, va_list args) {
       drmModeAtomicAddProperty(req, obj_id, prop_mgr_.GetPropertyId(DRMProperty::QSYNC_MODE),
                                qsync_mode);
       DRM_LOGD("Connector %d: Setting Qsync mode %d", obj_id, qsync_mode);
+    } break;
+
+    case DRMOps::CONNECTOR_SET_QSYNC_MIN_FPS: {
+      if (!prop_mgr_.IsPropertyAvailable(DRMProperty::QSYNC_MIN_FPS)) {
+        return;
+      }
+      uint32_t min_fps = va_arg(args, uint32_t);
+      drmModeAtomicAddProperty(req, obj_id, prop_mgr_.GetPropertyId(DRMProperty::QSYNC_MIN_FPS),
+                               min_fps);
+      DRM_LOGD("Connector %d: Setting Qsync minimum FPS value %#x", obj_id, min_fps);
     } break;
 
     case DRMOps::CONNECTOR_SET_TOPOLOGY_CONTROL: {

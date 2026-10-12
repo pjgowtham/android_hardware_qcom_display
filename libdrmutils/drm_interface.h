@@ -513,6 +513,12 @@ enum struct DRMOps {
    */
   CONNECTOR_SET_FINGERPRINT_MASK,
 #endif
+  /*
+   * Op: Sets qsync minimum FPS or packed Oplus ADFR auto-mode value
+   * Arg: uint32_t - Connector ID
+   *      uint32_t - Minimum FPS or auto-mode value
+   */
+  CONNECTOR_SET_QSYNC_MIN_FPS,
 };
 
 enum struct DRMRotation {
@@ -816,6 +822,7 @@ struct DRMConnectorInfo {
   bool has_cwb_dither = false;
   uint32_t max_os_brightness;
   uint32_t max_panel_backlight;
+  bool has_qsync_min_fps = false;
 };
 
 // All DRM Connectors as map<Connector_id , connector_info>

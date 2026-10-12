@@ -574,6 +574,26 @@ DisplayError HWDeviceDRM::Init() {
     return kErrorDeviceRemoved;
   }
 
+  int qsync_idle = 0;
+  Debug::GetProperty(ENABLE_QSYNC_IDLE, &qsync_idle);
+  oplus_adfr_idle_ = connector_info_.is_primary && connector_info_.has_qsync_min_fps &&
+                     qsync_idle == 1;
+  if (oplus_adfr_idle_) {
+    DLOGI("Enabling Oplus ADFR panel idle minimum");
+    bool has_sdc_adfr = std::any_of(connector_info_.modes.begin(), connector_info_.modes.end(),
+        [](const sde_drm::DRMModeInfo &mode) {
+          return mode.mode.hskew == 0 && mode.mode.vrefresh == 120;
+        });
+    if (has_sdc_adfr) {
+      // The alternate Oplus timings use QSync rather than the Samsung encoder-idle path.
+      auto &modes = connector_info_.modes;
+      modes.erase(std::remove_if(modes.begin(), modes.end(),
+          [](const sde_drm::DRMModeInfo &mode) {
+            return mode.mode.hskew == 2 || mode.mode.hskew == 3;
+          }), modes.end());
+    }
+  }
+
   hw_info_intf_->GetHWResourceInfo(&hw_resource_);
 
   InitializeConfigs();
@@ -1715,6 +1735,42 @@ void HWDeviceDRM::SetupAtomic(Fence::ScopedRef &scoped_ref, HWLayersInfo *hw_lay
         break;
       }
     }
+  }
+
+  // The Oplus driver handles this property before atomic validation, so only submit it on commit.
+  if (!validate && IsPrimaryDisplay() && connector_info_.has_qsync_min_fps) {
+    constexpr uint32_t kAutoMagic = 0x00800000;
+    constexpr uint32_t kAutoModeMagic = 0x00400000;
+    constexpr uint32_t kAutoMinFpsMagic = 0x00000080;
+    constexpr uint32_t kSdcAdfr = 0;
+    constexpr uint32_t kSdcMfr = 1;
+    bool enabled = hw_layers_info->hw_avr_info.mode != kQsyncNone;
+    uint32_t min_fps = current_mode.qsync_min_fps;
+    if (!min_fps) {
+      min_fps = connector_info_.qsync_fps;
+    }
+
+    uint32_t value = enabled ? min_fps : 0;
+    if (current_mode.mode.hskew == kSdcAdfr || current_mode.mode.hskew == kSdcMfr) {
+      // SDC modes encode minimum FPS as extra frames in a 120 Hz cycle, not as Hertz.
+      // SDC MFR and 90 Hz timings do not provide the 120 Hz auto-mode command sequence.
+      enabled = enabled && current_mode.mode.hskew == kSdcAdfr &&
+                current_mode.mode.vrefresh == 120;
+      uint32_t extend_frame = current_mode.mode.vrefresh == 60 ? 1 : 0;
+      if (enabled && min_fps) {
+        min_fps = std::min(min_fps, std::min(current_mode.mode.vrefresh, 120u));
+        extend_frame = std::min(120u / min_fps - 1, 0x77u);
+      } else if (oplus_adfr_idle_ &&
+                 (current_mode.mode.vrefresh == 120 || current_mode.mode.vrefresh == 60)) {
+        // AUTO_OFF with a 1 Hz minimum lets the kernel gate it on encoder idle entry/exit.
+        extend_frame = 0x77;
+      }
+      value = kAutoMagic | kAutoModeMagic | kAutoMinFpsMagic |
+              (enabled ? (1u << 16) : 0) | extend_frame;
+    }
+
+    // Panel enable and timing switches reset ADFR state; the kernel filters repeated values.
+    drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_QSYNC_MIN_FPS, token_.conn_id, value);
   }
 
   if (bit_clk_rate_) {
