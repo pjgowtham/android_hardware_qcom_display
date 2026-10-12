@@ -38,8 +38,9 @@ class PxlwSoftirisWrapper {
   bool HasSoftIris();
   int InitPrimaryDisplay(int32_t vsync_period_ns, uint32_t width, uint32_t height);
   void SetColorModeWithRenderIntent(
-      int32_t display_id, int32_t, android::hardware::graphics::common::V1_2::ColorMode colorMode,
-      android::hardware::graphics::common::V1_1::RenderIntent renderIntent);
+      int32_t display_id, int32_t display_type,
+      android::hardware::graphics::common::V1_2::ColorMode color_mode,
+      android::hardware::graphics::common::V1_1::RenderIntent render_intent);
 
  private:
   friend class PxlwIrisWrapper;
