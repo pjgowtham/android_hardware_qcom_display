@@ -741,8 +741,10 @@ void HWCDisplay::BuildLayerStack() {
     const std::string &name = hwc_layer->GetName();
     if (name.find(UDFPS_DIM_LAYER_NAME) != std::string::npos) {
       layer_stack_.flags.ofp_dim_layer_present = true;
+      layer->flags.sde_preferred = true;
     } else if (name.find(UDFPS_TOUCHED_LAYER_NAME) != std::string::npos) {
       layer_stack_.flags.ofp_fingerpress_layer_present = true;
+      layer->flags.sde_preferred = true;
     }
 #endif
 
